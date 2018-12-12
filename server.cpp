@@ -105,7 +105,7 @@ SmtpServer::SmtpServer(int buffer_size) :listen_socket_(INVALID_SOCKET), buffer_
 	if (buffer_ == NULL)
 	{
 		GetTimeStamp(log_time_buffer_, LOG_T_F);
-		log_file_ << log_time_buffer_ << "ERROR failed to new a " << buffer_
+		log_file_ << log_time_buffer_ << "ERROR failed to new a " << buffer_size_
 			<< "bytes buffer" << std::endl;
 
 		WSACleanup();
