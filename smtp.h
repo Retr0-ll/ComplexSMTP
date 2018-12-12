@@ -108,8 +108,11 @@ enum SVR_E{
 ********/
 void GetTimeStamp(char *output_time, const char *format);
 
+
+/*加载Socket资源*/
 void LoadSocket(int major_version, int minor_version);
 
+/*一些UI 函数*/
 
 
 class SmtpServer

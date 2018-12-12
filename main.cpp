@@ -31,6 +31,7 @@ int CheckCmd(SmtpServer&svr, const char* cmd,int cmd_len);
 
 int main()
 {
+
 	LoadSocket(2, 2);
 
 	SmtpServer svr(BUFFER_SIZE);
