@@ -88,6 +88,19 @@
 #define GET_PARA(buffer, cmd) (buffer+strlen(cmd))
 
 
+/*
+* 服务器退出的错误码
+*/
+enum SVR_E{
+	FILE_OPEN_ERROR,
+	BUFFER_GET_ERROR,
+	SOCKET_LOAD_ERROR,
+	SOCKET_CREAT_ERROR,
+	SOCKET_BIND_ERROR,
+	SOCKET_LISTEN_ERROR,
+	REMOTE_CONNECT_ERROR
+};
+
 /********
 * 获取指定格式的时间戳
 * char *output_time 输出参数：带回指定格式的字符串形式时间戳
@@ -125,6 +138,7 @@ public:
 	/*服务器SMTP通信状态 用于回调函数中处理逻辑的设计*/
 	int state_;
 	int exstate_;
+
 
 private:
 	/*缓冲大小*/

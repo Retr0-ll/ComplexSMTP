@@ -139,6 +139,10 @@ int ServerLogic(SmtpServer &svr)
 					svr.state_ = 5;
 					break;
 				}
+				else
+				{
+					return 1;
+				}
 			}
 
 		case 5://QUIT ---------- 221 Bye
@@ -221,9 +225,15 @@ int ClientLogic(SmtpServer &svr)
 	svr << DATA;
 	svr >> svr.buffer_;
 
-	svr.ReadMailData(mail_list);
-	svr << svr.buffer_;
-	svr >> svr.buffer_;
+	if (svr.ReadMailData(mail_list) == 0)
+	{
+		svr << svr.buffer_;
+		svr >> svr.buffer_;
+	}
+	else
+	{
+		return 1;
+	}
 
 	svr << QT;
 	svr >> svr.buffer_;

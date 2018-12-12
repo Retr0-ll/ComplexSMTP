@@ -83,6 +83,10 @@ SmtpServer::SmtpServer(int buffer_size) :listen_socket_(INVALID_SOCKET), buffer_
 
 	//打开Log文件
 	log_file_.open(log_fn);
+	if (!log_file_.is_open())
+	{
+		exit(FILE_OPEN_ERROR);
+	}
 
 	//获取socket 地址族ipv4 流式SOCKET 协议TCP
 	listen_socket_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -93,7 +97,7 @@ SmtpServer::SmtpServer(int buffer_size) :listen_socket_(INVALID_SOCKET), buffer_
 			<< WSAGetLastError() << std::endl;
 
 		WSACleanup();
-		exit(2);
+		exit(SOCKET_CREAT_ERROR);
 	}
 
 	//申请缓冲内存
@@ -105,7 +109,7 @@ SmtpServer::SmtpServer(int buffer_size) :listen_socket_(INVALID_SOCKET), buffer_
 			<< "bytes buffer" << std::endl;
 
 		WSACleanup();
-		exit(4);
+		exit(BUFFER_GET_ERROR);
 	}
 
 }
@@ -136,7 +140,7 @@ void SmtpServer::Listen(unsigned short listen_port)
 
 		closesocket(listen_socket_);
 		WSACleanup();
-		exit(3);
+		exit(SOCKET_BIND_ERROR);
 	}
 
 	//开始监听端口
@@ -148,7 +152,7 @@ void SmtpServer::Listen(unsigned short listen_port)
 
 		closesocket(listen_socket_);
 		WSACleanup();
-		exit(3);
+		exit(SOCKET_LISTEN_ERROR);
 	}
 
 	GetTimeStamp(log_time_buffer_, LOG_T_F);
@@ -176,6 +180,7 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 		session_socket_ = accept(listen_socket_, (SOCKADDR*)&host_addr, &host_addr_len);
 		GetTimeStamp(log_time_buffer_, LOG_T_F);
 
+		//连接失败则跳过，继续处理下一个连接
 		if (session_socket_ == INVALID_SOCKET)
 		{
 			log_file_ << GetTimeStamp << "WARNING accept failed with error: "
@@ -193,29 +198,35 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 		//然后调用回调函数开始SMTP SERVER逻辑
 		if (server_logic(svr) == 0)
 		{
+			//关闭客户端SOCKET
 			closesocket(session_socket_);
 			log_file_ << log_time_buffer_ << "INFO mail receive succeed" << std::endl;
 			std::cout << "INFO mail receive success" << std::endl;
+
+			//只有从客户端接收邮件成功，才进一步发生与远程服务器的通信
 			//连接远程服务器  调用回调函数 开始SMTP Client逻辑
 			if (ConnectRemote() == 0)
 			{
+				//连接成功，开始发送邮件
 				if (client_logic(svr) == 0)
 				{
+					//关闭远程服务器SOCKET
 					closesocket(session_socket_);
 					log_file_ << log_time_buffer_ << "INFO mail send succeed" << std::endl;
 					std::cout << "INFO mail send succeed" << std::endl;
 				}
 				else
 				{
+					//发送邮件失败也关闭远程服务器SOCKET
 					closesocket(session_socket_);
-					log_file_ << log_time_buffer_ << "WARNING mail send succeed" << std::endl;
-					std::cout << "INFO mail send succeed" << std::endl;
+					log_file_ << log_time_buffer_ << "WARNING mail send failed" << std::endl;
+					std::cout << "INFO mail send failed" << std::endl;
 				}
 			}
-			closesocket(session_socket_);
 		}
 		else
 		{
+			//接收邮件失败也关闭客户端SOKCET
 			closesocket(session_socket_);
 
 			GetTimeStamp(log_time_buffer_, LOG_T_F);
@@ -231,16 +242,21 @@ int SmtpServer::SaveMailData(char *mail_list)
 	int data_len = 0;
 	int data_count = 0;
 	data_file_.open(mail_list,std::ios::app);
+	if (!data_file_.is_open())
+	{
+		GetTimeStamp(log_time_buffer_, LOG_T_F);
+		log_file_ << log_time_buffer_ << "ERROR open data file failed" << std::endl;
+	}
 	data_file_ << END_OF_DATA;
 
 	//标记邮件起点
 	data_file_.width(8);
 	data_file_ << 0 << std::endl;
 
+	//接收一个或多个邮件数据包
 	while (true)
 	{
 		data_len = recv(session_socket_, buffer_, buffer_size_, 0);
-
 		//如果意外断开连接
 		if (data_len == -1)
 		{
@@ -250,6 +266,7 @@ int SmtpServer::SaveMailData(char *mail_list)
 
 			return 1;
 		}
+
 		data_count += data_len;
 		buffer_[data_len] = '\0';
 
@@ -287,18 +304,32 @@ int SmtpServer::ReadMailData(char *mail_list)
 	int mail_size;
 	int offset;
 	data_file_.open(mail_list, std::ios::in);
+	if (!data_file_.is_open())
+	{
+		GetTimeStamp(log_time_buffer_, LOG_T_F);
+		log_file_ << log_time_buffer_ << "WARRING disconnected from the client" << std::endl;
+		std::cout << "WARRING disconnected from the client" << std::endl;
+
+		return 1;
+	}
 
 	//获取邮件大小
 	data_file_.seekg(-10, std::ios::end);
 	data_file_ >> mail_size;
 
 	//定位到邮件起点
-	char cmp[6];
-	cmp[5] = '\0';
+	/*用邮件大小就可以直接定位到邮件起点
+	 *但是这里seekg函数向上定位跨度确小于传入参数
+	 *猜测是Windows文件格式的原因
+	 *所以这里先使用邮件大小初步定位，再用一个for循环精细比较邮件起点
+	 *(为了蒙混过关就用了这个蠢办法 别打我QAQ 嘤嘤嘤~
+	 */
+	char cmp[END_OF_DATA_L+1];
+	cmp[END_OF_DATA_L] = '\0';
 	for (offset = -mail_size;; offset--)
 	{
 		data_file_.seekg(offset, std::ios::end);
-		data_file_.read(cmp, 5);
+		data_file_.read(cmp, END_OF_DATA_L);
 		if (strcmp(cmp, END_OF_DATA) == 0)
 		{
 			offset += 17;
@@ -330,7 +361,7 @@ int SmtpServer::ConnectRemote()
 			<< WSAGetLastError() << std::endl;
 
 		WSACleanup();
-		exit(2);
+		exit(SOCKET_CREAT_ERROR);
 	}
 
 	//初始化远程地址
@@ -351,7 +382,7 @@ int SmtpServer::ConnectRemote()
 		closesocket(listen_socket_);
 		closesocket(session_socket_);
 		WSACleanup();
-		exit(3);
+		exit(REMOTE_CONNECT_ERROR);
 	}
 	if (session_socket_ == INVALID_SOCKET)
 	{
