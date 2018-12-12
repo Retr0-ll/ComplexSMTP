@@ -16,6 +16,9 @@
 
 #pragma comment (lib,"Ws2_32.lib")
 
+#pragma comment (lib,".\\OpenSSL\\lib\\libcrypto.lib")
+#pragma comment (lib,".\\OpenSSL\\lib\\libssl.lib")
+
 void GetTimeStamp(char *output, const char * format)
 {
 	time_t now_time;
@@ -44,11 +47,21 @@ void LoadSocket(int major_version, int minor_version)
 	}
 }
 
+void LoadSSL()
+{
+	/*SSL 库初始化*/
+	SSL_library_init();
+	/*载入所有SSL 算法*/
+	OpenSSL_add_all_algorithms();
+	/*载入所有SSL错误消息*/
+	SSL_load_error_strings();
+}
+
 
 SmtpServer& operator<<(SmtpServer& server, const char *data_send)
 {
 	//发送数据
-	send(server.session_socket_, data_send, strlen(data_send), 0);
+	SSL_write(server.ssl_, data_send, strlen(data_send));
 
 	//记录日志，输出到标准输出
 	GetTimeStamp(server.log_time_buffer_, LOG_T_F);
@@ -66,7 +79,7 @@ int operator>>(SmtpServer& server, char *data_receive)
 {
 	//接收数据，如果没有数据则阻塞挂起
 	int data_len = 0;
-	data_len = recv(server.session_socket_, data_receive, server.buffer_size_, NULL);
+	data_len = SSL_read(server.ssl_, data_receive, server.buffer_size_);
 	GetTimeStamp(server.log_time_buffer_, LOG_T_F);
 
 	//记录日志，输出到标准输出
@@ -82,7 +95,7 @@ int operator>>(SmtpServer& server, char *data_receive)
 }
 
 
-SmtpServer::SmtpServer(int buffer_size) :listen_socket_(INVALID_SOCKET), buffer_size_(buffer_size), buffer_(NULL)
+SmtpServer::SmtpServer(int buffer_size,const char *crt,const char *key) :listen_socket_(INVALID_SOCKET), buffer_size_(buffer_size), buffer_(NULL)
 {
 	//通过样式 LOG_FN_F 获取LOG文件名
 	char log_fn[30];
@@ -106,6 +119,34 @@ SmtpServer::SmtpServer(int buffer_size) :listen_socket_(INVALID_SOCKET), buffer_
 		WSACleanup();
 		exit(SOCKET_CREAT_ERROR);
 	}
+
+
+	//以 SSL V2 和 V3 标准兼容方式产生 SSL_CTX
+	server_ctx_ = SSL_CTX_new(SSLv23_server_method());
+	if (server_ctx_ == NULL)
+	{
+		ERR_print_errors_fp(stdout);
+		exit(1);
+	}
+	//载入用户的数字证书
+	if (SSL_CTX_use_certificate_file(server_ctx_, crt, SSL_FILETYPE_PEM) <= 0)
+	{
+		ERR_print_errors_fp(stdout);
+		exit(SSL_ERROR);
+	}
+	//载入用户私钥
+	if (SSL_CTX_use_PrivateKey_file(server_ctx_, key, SSL_FILETYPE_PEM) <= 0) 
+	{
+		ERR_print_errors_fp(stdout);
+		exit(SSL_ERROR);
+	}
+	//检查用户私钥是否正确
+	if (!SSL_CTX_check_private_key(server_ctx_)) 
+	{
+		ERR_print_errors_fp(stdout);
+		exit(SSL_ERROR);
+	}
+
 
 	//申请缓冲内存
 	buffer_ = new char[buffer_size_];
@@ -208,6 +249,12 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 		std::cout << " a connection from " << inet_ntoa(host_addr.sin_addr)
 			<< ":" << ntohs(host_addr.sin_port) << std::endl;
 
+		//建立SSL连接
+		if (BuildSsl() != 0)
+		{
+			closesocket(session_socket_);
+			break;
+		}
 
 		//然后调用回调函数开始SMTP SERVER逻辑
 		if (server_logic(svr) == 0)
@@ -255,6 +302,21 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 			std::cout << "WARNING mail receive failed" << std::endl;
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 7);
 		}
+	}
+}
+
+
+int SmtpServer::BuildSsl()
+{
+	//基于服务器CTX 生成一个SSL会话
+	ssl_ = SSL_new(server_ctx_);
+	//将连接用户的socket 加入到SSL
+	SSL_set_fd(ssl_, session_socket_);
+	//建立 SSL 连接
+	if (SSL_accept(ssl_) == -1)
+	{
+		std::cout << "SSL Connect failed!" << std::endl;
+		return 1;
 	}
 }
 

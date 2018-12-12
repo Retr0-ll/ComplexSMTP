@@ -21,6 +21,10 @@
 #endif
 
 
+/*OpenSSL*/
+#include<openssl/ssl.h>
+#include<openssl/err.h>
+
 /*
 * LOG_FN_F 定义了服务器Log文件的目录以及命名样式
 * LOG_T_F  定义了服务器Log文件中时间戳的样式
@@ -98,7 +102,8 @@ enum SVR_E{
 	SOCKET_CREAT_ERROR,
 	SOCKET_BIND_ERROR,
 	SOCKET_LISTEN_ERROR,
-	REMOTE_CONNECT_ERROR
+	REMOTE_CONNECT_ERROR,
+	SSL_ERROR
 };
 
 /********
@@ -108,12 +113,11 @@ enum SVR_E{
 ********/
 void GetTimeStamp(char *output_time, const char *format);
 
-
 /*加载Socket资源*/
 void LoadSocket(int major_version, int minor_version);
 
-/*一些UI 函数*/
-
+/*加载SSL资源*/
+void LoadSSL();
 
 class SmtpServer
 {
@@ -128,6 +132,12 @@ private:
 	const char *remote_addr_;
 	unsigned short remote_port_;
 
+	/*服务器与客户端通信CTX(SSL Content Text)、作为客户端与远程通信CTX*/
+	SSL_CTX *server_ctx_;
+	SSL_CTX *client_ctx_;
+
+	/**/
+	SSL *ssl_;
 
 public:
 	/*********
@@ -157,7 +167,7 @@ public:
 	*构造函数打开Log文件、初始化服务器监听套接字、申请服务器缓冲
 	*析构函数释放SOCKET资源、释放服务器缓冲、关闭Log文件
 	***********/
-	SmtpServer(int buffer_size);
+	SmtpServer(int buffer_size,const char *crt,const char *key);
 	~SmtpServer();
 
 
@@ -190,6 +200,9 @@ public:
 	friend int operator>>(SmtpServer& server, char *data_receive);
 
 private:
+	/*建立SSL连接*/
+	int BuildSsl();
+
 	/*连接默认的远程SMTP服务器 在Client回调之前执行 */
 	int ConnectRemote();
 };
