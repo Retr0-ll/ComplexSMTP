@@ -12,8 +12,8 @@
 
 #define BUFFER_SIZE 1024*10 //×Ö½Ú
 
-#define CRT_PATH ".\\Key\\ca-cert.pem"
-#define KEY_PATH ".\\Key\\ca-key.pem"
+#define CRT_PATH ".\\Key\\SimpleSMTP.crt"
+#define KEY_PATH ".\\Key\\SImpleSMTP.key"
 
 int ServerLogic(SmtpServer &svr);
 
