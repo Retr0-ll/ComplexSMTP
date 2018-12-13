@@ -380,7 +380,7 @@ int SmtpServer::SaveMailData(char *mail_list)
 		{
 			//标记邮件结束点
 			data_file_.width(8);
-			data_file_ << data_len << std::endl;
+			data_file_ << data_count << std::endl;
 			data_file_.close();
 			
 
