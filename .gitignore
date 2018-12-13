@@ -7,4 +7,3 @@ Log/*
 Data/*
 !Data/folder_for_mail_list
 
-*vcxproj.user
