@@ -16,8 +16,8 @@
 
 #pragma comment (lib,"Ws2_32.lib")
 
-#pragma comment (lib,".\\OpenSSL\\lib\\libcrypto.lib")
-#pragma comment (lib,".\\OpenSSL\\lib\\libssl.lib")
+#pragma comment (lib,"libcrypto.lib")
+#pragma comment (lib,"libssl.lib")
 
 void GetTimeStamp(char *output, const char * format)
 {
