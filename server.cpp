@@ -440,7 +440,7 @@ int SmtpServer::ConnectRemote()
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_GREEN);
 	std::cout << "INFO server connected to " << remote_addr_
 		<< ":" << remote_port_ << "......" << std::endl;
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 7);
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 
 	return 0;
 
