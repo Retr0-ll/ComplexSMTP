@@ -122,7 +122,7 @@ SmtpServer::SmtpServer(int buffer_size,const char *crt,const char *key) :listen_
 
 
 	//以 SSL V2 和 V3 标准兼容方式产生 SSL_CTX
-	server_ctx_ = SSL_CTX_new(SSLv23_server_method());
+	server_ctx_ = SSL_CTX_new(SSLv23_method());
 	if (server_ctx_ == NULL)
 	{
 		ERR_print_errors_fp(stdout);
@@ -253,7 +253,7 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 		if (BuildSsl() != 0)
 		{
 			closesocket(session_socket_);
-			break;
+			continue;
 		}
 
 		//然后调用回调函数开始SMTP SERVER逻辑

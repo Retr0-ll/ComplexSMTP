@@ -12,8 +12,8 @@
 
 #define BUFFER_SIZE 1024*10 //×Ö½Ú
 
-#define CRT_PATH ".\\Key\\certificate.pem"
-#define KEY_PATH ".\\Key\\key.pem"
+#define CRT_PATH ".\\Key\\ca.crt"
+#define KEY_PATH ".\\Key\\ca.key"
 
 int ServerLogic(SmtpServer &svr);
 
@@ -39,7 +39,7 @@ int main()
 	LoadSSL();
 
 	SmtpServer svr(BUFFER_SIZE,CRT_PATH,KEY_PATH);
-	svr.Listen(25);
+	svr.Listen(465);
 	svr.Start(&ServerLogic, &ClientLogic, svr);
 	return 0;
 }
