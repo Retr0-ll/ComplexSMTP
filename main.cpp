@@ -172,6 +172,11 @@ int ServerLogic(SmtpServer &svr)
 		}
 
 		len = svr >> svr.buffer_;
+		//如遇到意外断开连接 直接返回非零值
+		if (len == -1)
+		{
+			return 1;
+		}
 	}
 }
 
@@ -204,6 +209,7 @@ int CheckCmd(SmtpServer&svr, const char* state_cmd, int cmd_len)
 
 int ClientLogic(SmtpServer &svr)
 {
+
 	svr >> svr.buffer_;
 
 	svr << EHLO;

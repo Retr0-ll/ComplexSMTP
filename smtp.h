@@ -132,11 +132,10 @@ private:
 	const char *remote_addr_;
 	unsigned short remote_port_;
 
-	/*服务器与客户端通信CTX(SSL Content Text)、作为客户端与远程通信CTX*/
+	/*CTX(SSL Content Text) 作为服务器与客户端通信CTX  作为客户端与真正服务器通信CTX*/
 	SSL_CTX *server_ctx_;
 	SSL_CTX *client_ctx_;
-
-	/**/
+	/*SSL 安全套接字层会话*/
 	SSL *ssl_;
 
 public:
@@ -200,9 +199,11 @@ public:
 	friend int operator>>(SmtpServer& server, char *data_receive);
 
 private:
-	/*建立SSL连接*/
+	/*与客户端建立SSL连接*/
 	int BuildSsl();
 
 	/*连接默认的远程SMTP服务器 在Client回调之前执行 */
 	int ConnectRemote();
+	/*建立SSL连接 由ConnectRemote调用*/
+	int ConnectSSL();
 };

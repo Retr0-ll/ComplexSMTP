@@ -47,6 +47,7 @@ void LoadSocket(int major_version, int minor_version)
 	}
 }
 
+
 void LoadSSL()
 {
 	/*SSL 库初始化*/
@@ -80,6 +81,11 @@ int operator>>(SmtpServer& server, char *data_receive)
 	//接收数据，如果没有数据则阻塞挂起
 	int data_len = 0;
 	data_len = SSL_read(server.ssl_, data_receive, server.buffer_size_);
+	if (data_len == -1)
+	{
+		std::cout << "no data";
+		system("pause");
+	}
 	GetTimeStamp(server.log_time_buffer_, LOG_T_F);
 
 	//记录日志，输出到标准输出
@@ -122,12 +128,22 @@ SmtpServer::SmtpServer(int buffer_size,const char *crt,const char *key) :listen_
 
 
 	//以 SSL V2 和 V3 标准兼容方式产生 SSL_CTX
+	//服务器CTX
 	server_ctx_ = SSL_CTX_new(SSLv23_server_method());
 	if (server_ctx_ == NULL)
 	{
 		ERR_print_errors_fp(stdout);
 		exit(1);
 	}
+	//客户端CTX
+	client_ctx_ = SSL_CTX_new(SSLv23_client_method());
+	if (client_ctx_ == NULL)
+	{
+		ERR_print_errors_fp(stdout);
+		exit(1);
+	}
+
+
 	//载入用户的数字证书
 	if (SSL_CTX_use_certificate_file(server_ctx_, crt, SSL_FILETYPE_PEM) <= 0)
 	{
@@ -259,8 +275,10 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 		//然后调用回调函数开始SMTP SERVER逻辑
 		if (server_logic(svr) == 0)
 		{
-			//关闭客户端SOCKET
+			//关闭客户端SSL 和SOCKET
+			SSL_shutdown(ssl_);
 			closesocket(session_socket_);
+
 			log_file_ << log_time_buffer_ << "INFO mail receive succeed" << std::endl;
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_GREEN);
 			std::cout << "\nINFO mail receive success\n" << std::endl;
@@ -274,7 +292,9 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 				if (client_logic(svr) == 0)
 				{
 					//关闭远程服务器SOCKET
+					SSL_shutdown(ssl_);
 					closesocket(session_socket_);
+
 					log_file_ << log_time_buffer_ << "INFO mail send succeed" << std::endl;
 					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_GREEN);
 					std::cout << "\nINFO mail send succeed\n" << std::endl;
@@ -283,7 +303,9 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 				else
 				{
 					//发送邮件失败也关闭远程服务器SOCKET
+					SSL_shutdown(ssl_);
 					closesocket(session_socket_);
+
 					log_file_ << log_time_buffer_ << "WARNING mail send failed" << std::endl;
 					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED);
 					std::cout << "INFO mail send failed" << std::endl;
@@ -294,6 +316,7 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 		else
 		{
 			//接收邮件失败也关闭客户端SOKCET
+			SSL_shutdown(ssl_);
 			closesocket(session_socket_);
 
 			GetTimeStamp(log_time_buffer_, LOG_T_F);
@@ -315,7 +338,7 @@ int SmtpServer::BuildSsl()
 	//建立 SSL 连接
 	if (SSL_accept(ssl_) == -1)
 	{
-		std::cout << "ERROR SSL Connect failed!" << std::endl;
+		std::cout << "ERROR SSL Build failed!" << std::endl;
 		return 1;
 	}
 	return 0;
@@ -454,7 +477,7 @@ int SmtpServer::ConnectRemote()
 {
 	session_socket_ = INVALID_SOCKET;
 	remote_addr_ = "220.181.12.17";
-	remote_port_ = 25;
+	remote_port_ = 465;
 
 	session_socket_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (session_socket_ == INVALID_SOCKET)
@@ -494,6 +517,11 @@ int SmtpServer::ConnectRemote()
 
 		return 1;
 	}
+	//建立安全连接
+	if (ConnectSSL() != 0)
+	{
+		return 1;
+	}
 
 	//连接成功
 	GetTimeStamp(log_time_buffer_, LOG_T_F);
@@ -510,10 +538,28 @@ int SmtpServer::ConnectRemote()
 }
 
 
+int SmtpServer::ConnectSSL()
+{
+	//基于客户端CTX 生成一个SSL会话
+	ssl_ = SSL_new(client_ctx_);
+	//将连接的socket 加入到SSL
+	SSL_set_fd(ssl_, session_socket_);
+	//建立 SSL 连接
+	if (SSL_connect(ssl_) == -1)
+	{
+		std::cout << "ERROR SSL Connect failed!" << std::endl;
+		return 1;
+	}
+	return 0;
+}
+
+
 SmtpServer::~SmtpServer()
 {
 	delete[]buffer_;
 	log_file_.close();
+	SSL_CTX_free(server_ctx_);
+	SSL_CTX_free(client_ctx_);
 	closesocket(listen_socket_);
 	WSACleanup();
 }
