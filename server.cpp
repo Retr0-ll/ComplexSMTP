@@ -122,7 +122,7 @@ SmtpServer::SmtpServer(int buffer_size,const char *crt,const char *key) :listen_
 
 
 	//以 SSL V2 和 V3 标准兼容方式产生 SSL_CTX
-	server_ctx_ = SSL_CTX_new(SSLv23_method());
+	server_ctx_ = SSL_CTX_new(SSLv23_server_method());
 	if (server_ctx_ == NULL)
 	{
 		ERR_print_errors_fp(stdout);
@@ -315,9 +315,10 @@ int SmtpServer::BuildSsl()
 	//建立 SSL 连接
 	if (SSL_accept(ssl_) == -1)
 	{
-		std::cout << "SSL Connect failed!" << std::endl;
+		std::cout << "ERROR SSL Connect failed!" << std::endl;
 		return 1;
 	}
+	return 0;
 }
 
 
@@ -340,7 +341,7 @@ int SmtpServer::SaveMailData(char *mail_list)
 	//接收一个或多个邮件数据包
 	while (true)
 	{
-		data_len = recv(session_socket_, buffer_, buffer_size_, 0);
+		data_len = SSL_read(ssl_, buffer_, buffer_size_);
 		//如果意外断开连接
 		if (data_len == -1)
 		{
