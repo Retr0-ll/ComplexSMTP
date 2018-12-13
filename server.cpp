@@ -204,7 +204,7 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 			<< ":" << ntohs(host_addr.sin_port) << std::endl;
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_GREEN);
 		std::cout << "INFO";
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 7);
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 		std::cout << " a connection from " << inet_ntoa(host_addr.sin_addr)
 			<< ":" << ntohs(host_addr.sin_port) << std::endl;
 
@@ -217,7 +217,7 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 			log_file_ << log_time_buffer_ << "INFO mail receive succeed" << std::endl;
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_GREEN);
 			std::cout << "\nINFO mail receive success\n" << std::endl;
-			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 7);
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 
 			//只有从客户端接收邮件成功，才进一步发生与远程服务器的通信
 			//连接远程服务器  调用回调函数 开始SMTP Client逻辑
@@ -231,7 +231,7 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 					log_file_ << log_time_buffer_ << "INFO mail send succeed" << std::endl;
 					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_GREEN);
 					std::cout << "\nINFO mail send succeed\n" << std::endl;
-					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 7);
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 				}
 				else
 				{
@@ -240,7 +240,7 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 					log_file_ << log_time_buffer_ << "WARNING mail send failed" << std::endl;
 					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED);
 					std::cout << "INFO mail send failed" << std::endl;
-					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 7);
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 				}
 			}
 		}
@@ -253,7 +253,7 @@ void SmtpServer::Start(CallBack server_logic, CallBack client_logic, SmtpServer&
 			log_file_ << log_time_buffer_ << "WARNING mail receive failed" << std::endl;
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED);
 			std::cout << "WARNING mail receive failed" << std::endl;
-			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 7);
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 		}
 	}
 }
@@ -286,7 +286,7 @@ int SmtpServer::SaveMailData(char *mail_list)
 			log_file_ << log_time_buffer_ << "WARRING disconnected from the client" << std::endl;
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED);
 			std::cout<< "WARRING disconnected from the client" << std::endl;
-			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 7);
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 
 			return 1;
 		}
@@ -300,17 +300,17 @@ int SmtpServer::SaveMailData(char *mail_list)
 		std::cout << "INFO";
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 5);
 		std::cout << " receiving data......... " << data_len << " bytes" << std::endl;
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 7);
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 		
 		//写入文件
 		data_file_ << buffer_;
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_GREEN);
 		std::cout << "INFO";
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 7);
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 		std::cout << " receive:  ";
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 1);
 		std::cout << buffer_;
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 7);
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 
 		//检查数据结束标志
 		if (strcmp(CHECK_DATA_END(buffer_, data_len), END_OF_DATA) == 0)
@@ -328,7 +328,7 @@ int SmtpServer::SaveMailData(char *mail_list)
 			std::cout << "INFO";
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 5);
 			std::cout << " finished  ..... total: " << data_count << " bytes" << std::endl;
-			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 7);
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 			break;
 		}
 	}
@@ -348,7 +348,7 @@ int SmtpServer::ReadMailData(char *mail_list)
 		log_file_ << log_time_buffer_ << "WARRING disconnected from the client" << std::endl;
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED);
 		std::cout << "WARRING disconnected from the client" << std::endl;
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | 7);
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 
 		return 1;
 	}
