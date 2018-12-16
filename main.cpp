@@ -54,7 +54,7 @@ int ServerLogic(SmtpServer &svr)
 	int len = 0;
 
 	//开始处理客户端命令
-	for (svr >> svr.buffer_,rcv_num=0; svr.state_ != -2;)
+	for (svr >> svr.buffer_,rcv_num=0; svr.state_ != -2; )
 	{
 
 		switch (svr.state_)
@@ -172,12 +172,10 @@ int ServerLogic(SmtpServer &svr)
 		}
 
 		len = svr >> svr.buffer_;
-		//如遇到意外断开连接 直接返回非零值
-		if (len == -1)
-		{
-			return 1;
-		}
 	}
+
+	//意外断开连接
+	return 1;
 }
 
 int CheckCmd(SmtpServer&svr, const char* state_cmd, int cmd_len)

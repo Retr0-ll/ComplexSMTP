@@ -81,12 +81,21 @@ int operator>>(SmtpServer& server, char *data_receive)
 	//接收数据，如果没有数据则阻塞挂起
 	int data_len = 0;
 	data_len = SSL_read(server.ssl_, data_receive, server.buffer_size_);
+
+	GetTimeStamp(server.log_time_buffer_, LOG_T_F);
+
+	//客户端意外断开连接
 	if (data_len == -1)
 	{
-		std::cout << "no data";
-		system("pause");
+		server.state_ = -2;
+
+		server.log_file_ << server.log_time_buffer_ << "WARRING client disconnected from server" << std::endl;
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED);
+		std::cout << "WARRING client disconnected from server" << std::endl;
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
+
+		return -1;
 	}
-	GetTimeStamp(server.log_time_buffer_, LOG_T_F);
 
 	//记录日志，输出到标准输出
 	data_receive[data_len] = '\0';
@@ -369,9 +378,9 @@ int SmtpServer::SaveMailData(char *mail_list)
 		if (data_len == -1)
 		{
 			GetTimeStamp(log_time_buffer_, LOG_T_F);
-			log_file_ << log_time_buffer_ << "WARRING disconnected from the client" << std::endl;
+			log_file_ << log_time_buffer_ << "WARRING client disconnected from server" << std::endl;
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED);
-			std::cout<< "WARRING disconnected from the client" << std::endl;
+			std::cout << "WARRING client disconnected from server" << std::endl;
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 
 			return 1;
