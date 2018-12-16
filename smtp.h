@@ -20,6 +20,8 @@
 #include <fstream>
 #endif
 
+/*DEBUG 开关*/
+#define SMTP_DEBUG 1
 
 /*
 * LOG_FN_F 定义了服务器Log文件的目录以及命名样式
@@ -112,7 +114,6 @@ void GetTimeStamp(char *output_time, const char *format);
 /*加载Socket资源*/
 void LoadSocket(int major_version, int minor_version);
 
-/*一些UI 函数*/
 
 
 class SmtpServer
