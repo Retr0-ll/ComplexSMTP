@@ -62,6 +62,10 @@ int ServerLogic(SmtpServer &svr)
 				svr.state_ = 1;
 				break;
 			}
+			else
+			{
+				continue;
+			}
 
 		case 1://Auth login ---- 334 recive Username and passwd	---- 235 Authentication successful
 			if (CheckCmd(svr, AL, AL_L) == 0)
@@ -79,6 +83,10 @@ int ServerLogic(SmtpServer &svr)
 
 				svr.state_ = 2;
 				break;
+			}
+			else
+			{
+				continue;
 			}
 
 		case 2://Mail From ------ 250 OK
@@ -98,9 +106,14 @@ int ServerLogic(SmtpServer &svr)
 				strcat_s(mail_list, ".txt");
 
 				svr << RB250;
+
 				svr.state_ = 3;
 
 				break;
+			}
+			else
+			{
+				continue;
 			}
 
 		case 3://RCPT TO ------- 250 OK
@@ -122,11 +135,16 @@ int ServerLogic(SmtpServer &svr)
 
 				break;
 			}
+			else
+			{
+				continue;
+			}
 
 		case 4:// DATA --------- 354 Ready
 			//判断是否继续是RCPT 如果是 则继续回到case 3
 			if (CheckCmd(svr, RT_C, RT_L) == 0)
 			{
+				svr.exstate_ = 2;
 				svr.state_ = 3;
 				continue;
 			}
@@ -136,7 +154,6 @@ int ServerLogic(SmtpServer &svr)
 				if (svr.SaveMailData(mail_list) == 0)
 				{
 					svr << RB250;
-					svr.exstate_ = 4;
 					svr.state_ = 5;
 					break;
 				}
@@ -145,20 +162,27 @@ int ServerLogic(SmtpServer &svr)
 					return 1;
 				}
 			}
+			else
+			{
+				continue;
+			}
 
 		case 5://QUIT ---------- 221 Bye
-			if (CheckCmd(svr, QT, QT_L) != 0)
+			if (CheckCmd(svr, QT, QT_L) == 0)
 			{
-				break;
-			}
-			svr << RB221;
-			if (svr.exstate_ == 4)
-			{
-				return 0;
+				svr << RB221;
+				if (svr.exstate_ == 4)
+				{
+					return 0;
+				}
+				else
+				{
+					return 1;
+				}
 			}
 			else
 			{
-				return 1;
+				continue;
 			}
 
 		case -1://Invalid Command ---- 500 
