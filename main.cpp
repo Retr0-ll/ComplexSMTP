@@ -66,6 +66,10 @@ int ServerLogic(SmtpServer &svr)
 				svr.state_ = 1;
 				break;
 			}
+			else
+			{
+				continue;
+			}
 
 		case 1://Auth login ---- 334 recive Username and passwd	---- 235 Authentication successful
 			if (CheckCmd(svr, AL, AL_L) == 0)
@@ -83,6 +87,10 @@ int ServerLogic(SmtpServer &svr)
 
 				svr.state_ = 2;
 				break;
+			}
+			else
+			{
+				continue;
 			}
 
 		case 2://Mail From ------ 250 OK
@@ -106,6 +114,10 @@ int ServerLogic(SmtpServer &svr)
 
 				break;
 			}
+			else
+			{
+				continue;
+			}
 
 		case 3://RCPT TO ------- 250 OK
 			if (CheckCmd(svr, RT_C, RT_L) == 0)
@@ -125,6 +137,10 @@ int ServerLogic(SmtpServer &svr)
 				svr.state_ = 4;
 
 				break;
+			}
+			else
+			{
+				continue;
 			}
 
 		case 4:// DATA --------- 354 Ready
@@ -149,20 +165,27 @@ int ServerLogic(SmtpServer &svr)
 					return 1;
 				}
 			}
+			else
+			{
+				continue;
+			}
 
 		case 5://QUIT ---------- 221 Bye
-			if (CheckCmd(svr, QT, QT_L) != 0)
+			if (CheckCmd(svr, QT, QT_L) == 0)
 			{
-				break;
-			}
-			svr << RB221;
-			if (svr.exstate_ == 4)
-			{
-				return 0;
+				svr << RB221;
+				if (svr.exstate_ == 4)
+				{
+					return 0;
+				}
+				else
+				{
+					return 1;
+				}
 			}
 			else
 			{
-				return 1;
+				continue;
 			}
 
 		case -1://Invalid Command ---- 500 

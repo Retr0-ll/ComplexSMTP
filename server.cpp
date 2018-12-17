@@ -216,7 +216,6 @@ void SmtpServer::Listen(unsigned short listen_port)
 	svr_adr.sin_port = htons(listen_port_);
 	svr_adr.sin_addr.S_un.S_addr = inet_addr(listen_addr_);
 
-
 	//绑定端口和地址
 	if (bind(listen_socket_, (LPSOCKADDR)&svr_adr, sizeof(svr_adr)) == SOCKET_ERROR)
 	{

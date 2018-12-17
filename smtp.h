@@ -20,7 +20,7 @@
 #include <fstream>
 #endif
 
-#define SMTP_DEBUG 0
+#define SMTP_DEBUG 1
 
 /*OpenSSL*/
 #include<openssl/ssl.h>
