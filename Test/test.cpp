@@ -9,14 +9,14 @@ int main()
 
 	SOCKET s = INVALID_SOCKET;
 
-	char inputbuf[100];
+	char inputbuf[1000];
 
 	while (true)
 	{
 		while (true)
 		{
 			std::cout << "$YuLiBao@DEBUG: ~$ ";
-			std::cin.getline(inputbuf,100);
+			std::cin.getline(inputbuf,1000);
 
 			if (strcmp(inputbuf, "#CMD connect") == 0)
 			{
@@ -34,7 +34,7 @@ int main()
 			}
 			else if (strcmp(inputbuf, "#CMD show") == 0)
 			{
-				len = recv(s, inputbuf, 100, 0);
+				len = recv(s, inputbuf, 1000, 0);
 				inputbuf[len] = '\0';
 
 				std::cout << "receive >>" << inputbuf;
