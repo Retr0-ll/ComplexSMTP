@@ -92,7 +92,7 @@ int operator>>(SmtpServer& server, char *data_receive)
 	GetTimeStamp(server.log_time_buffer_, LOG_T_F);
 
 	//客户端意外断开连接
-	if (data_len == -1)
+	if (data_len <= 0)
 	{
 		server.state_ = -2;
 
@@ -395,7 +395,7 @@ int SmtpServer::SaveMailData(char *mail_list)
 	{
 		data_len = SSL_read(ssl_, buffer_, buffer_size_);
 		//如果意外断开连接
-		if (data_len == -1)
+		if (data_len <= 0)
 		{
 			GetTimeStamp(log_time_buffer_, LOG_T_F);
 			log_file_ << log_time_buffer_ << "WARRING disconnected from the client" << std::endl;
